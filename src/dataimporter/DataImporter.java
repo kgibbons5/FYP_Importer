@@ -29,11 +29,13 @@ public class DataImporter {
     static LookupTable _contexthtc = null;
     
     public static String[]parts = null;
-    public static Map<String, Long> categories = null;
+    public static String[] categories = null;
+
     public static boolean categories_set = false;
     
-    public static Map<String, Long>  src_contexts = null;
-    public static Map<String, Long>  targ_contexts = null;
+    public static String[]  src_contexts = null;
+    public static String[]  targ_contexts = null;
+ 
     
     static final int CATEGORY = 0;
     static final int SRC_TERM = 1;
@@ -67,9 +69,7 @@ public class DataImporter {
         long targ_lang_id=0;
         long src_term_id=0;
         long targ_term_id=0;
-        long category_id=0;
-        long src_context_id=0;
-        long targ_context_id=0;
+        //long category_id=0;
         
        
         while((line=br.readLine())!=null)
@@ -89,8 +89,41 @@ public class DataImporter {
                 
                 
                 // call lookup method from TermLookuper class
-                src_term_id = TermLookuper.lookup(con, parts[SRC_TERM], src_lang_id);
-                targ_term_id = TermLookuper.lookup(con, parts[TARG_TERM], targ_lang_id);
+                src_term_id = Lookuper.Termlookup(con, parts[SRC_TERM], src_lang_id);
+                targ_term_id = Lookuper.Termlookup(con, parts[TARG_TERM], targ_lang_id);
+                
+                
+                // put into each of their own try catch
+                
+                for(int j=0; j<categories.length; j++)
+                {
+                   System.out.println("Inside categories "+categories[j]);
+                   long category_id=_categorieshtc.getID(categories[j]);
+                   System.out.println("\nCategory id is:"+ category_id);
+                   long src_term_has_cat_id = Lookuper.Categorylookup(con, src_term_id,category_id );
+                   long targ_term_has_cat_id = Lookuper.Categorylookup(con, targ_term_id, category_id);
+                   System.out.println("\nsrc_term_has_context_id : "+src_term_has_cat_id );
+                   System.out.println("\ntarg_term_has_context_id : "+targ_term_has_cat_id );
+                }
+                
+                 for(int j=0; j<src_contexts.length; j++)
+                {
+                   System.out.println("Inside categories "+src_contexts[j]);
+                   long context_id=_contexthtc.getID(src_contexts[j],src_lang_id);
+                   System.out.println("\nCategory id is:"+ context_id);
+                   long src_term_has_contetx_id = Lookuper.Contextlookup(con, src_term_id,context_id );
+                   System.out.println("\nsrc_term_has_context_id : "+src_term_has_contetx_id );
+                }
+                 
+                 
+                  for(int j=0; j<targ_contexts.length; j++)
+                {
+                   System.out.println("Inside categories "+targ_contexts[j]);
+                   long context_id=_contexthtc.getID(targ_contexts[j],targ_lang_id);
+                   System.out.println("\nCategory id is:"+ context_id);
+                   long targ_term_has_context_id = Lookuper.Contextlookup(con, targ_term_id, context_id);
+                   System.out.println("\ntarg_term_has_context_id : "+targ_term_has_context_id );
+                }
                 
                 
                 // insert into translations table
@@ -101,54 +134,6 @@ public class DataImporter {
 
                 pst.executeUpdate();
 
-                
-                // if set to false
-                if(!categories_set){
-                    
-                    for(Map.Entry<String, Long> entry : categories.entrySet()) {
-                        // storing id and cat name in categories map
-                        entry.setValue(_categorieshtc.getID(entry.getKey()));
-                        System.out.println("Entry in categories is: "+entry);
-                        category_id= entry.getValue();
-                    }
-                    
-                    categories_set = true;
-               }
-               
-           
-                System.out.println("CATEGORY ID IS: " +category_id);
-                
-               
-                
-                pst = con.prepareStatement("Insert into terms_has_categories (terms_id, categories_id) VALUES (?,?);"  ,
-                                    Statement.RETURN_GENERATED_KEYS);
-                pst.setLong(1, src_term_id);
-                pst.setLong(2, category_id);
-
-                pst.executeUpdate();
-
-                pst = con.prepareStatement("Insert into terms_has_categories (terms_id, categories_id) VALUES (?,?);"  ,
-                                    Statement.RETURN_GENERATED_KEYS);
-                pst.setLong(1, targ_term_id);
-                pst.setLong(2, category_id);
-
-                pst.executeUpdate(); 
-            
-
-                
-                for(Map.Entry<String, Long> entry : src_contexts.entrySet()) {
-                       
-                       entry.setValue(_contexthtc.getID(entry.getKey(),src_lang_id));
-                       System.out.println("!!!!!!!!!!!!!Entry in src context is: "+entry);
-                       
-                   }
-                
-//                src_context_id =_contexthtc.getID(parts[SRC_CONTEXT]);
-//                targ_context_id =_contexthtc.getID(parts[TARG_CONTEXT]);
-//                
-//                System.out.println("SOURCE CONTEXT IS "+src_context_id);
-//                System.out.println("TARG CONTEXT IS "+targ_context_id);
-          
             }
             
             
@@ -180,17 +165,14 @@ public class DataImporter {
                 "Select category,id from categories;"
             );
             
-            
+            //building on fly dont' have to worry about loading
+            //since context is language driven we don't know which language to laod
             _contexthtc =new LookupTable(con, 
                 "Insert into context (context,language) VALUES (?,?);", 
-                "Select id from context where context=? limit 1;",
-                "Select id,context,language from context;"
+                "Select id from context where context=? and language=? limit 1;",
+                null
             ); 
             
-            
-            categories = new TreeMap<>();
-            src_contexts = new TreeMap<>();
-            targ_contexts = new TreeMap<>();
             
            
             return true;
@@ -224,50 +206,28 @@ public class DataImporter {
             parts[i] = parts[i].replace("\"","").toLowerCase();
         }
          
-        String[] cat_seperator = parts[CATEGORY].split("/",-1);
         
+        if (parts[CATEGORY].length()>0){
+             //if category field not empty have to reuse it
+            categories = parts[CATEGORY].split("/",-1);
+        }
         // always greater than 0???????????????????
-        System.out.println("Category seperator size  " +cat_seperator.length);
+        System.out.println("Category seperator size  " +categories.length);
         
-        //if category field not empty have to reuse it
-        //if empty flag still set to true so will have previous category?????
-        //if not empty and new category add to map
-        //if(cat_seperator.length>0){
-        for(int i=0;i<cat_seperator.length;i++){
-                
-            if(cat_seperator.length>0 && !cat_seperator[i].isEmpty()){
-                categories.clear();
-                categories_set = false;
-
-                for(int j=0; j<cat_seperator.length; j++)
-                {
-                    System.out.println("Inside category seperator "+cat_seperator[j]);
-                    // put categories into categories map
-                    categories.put(cat_seperator[j],null);
-                }
-            }        
+       
+        // dont want to share contexts
+        src_contexts=null;
+        targ_contexts=null;
+        
+         if (parts[SRC_CONTEXT].length()>0){
+            src_contexts = parts[SRC_CONTEXT].split("/",-1);
+        }
+         
+          if (parts[TARG_CONTEXT].length()>0){
+            targ_contexts = parts[TARG_CONTEXT].split("/",-1);
         }
         
-        src_contexts.clear();
-        targ_contexts.clear();
-        
-        //splitting contexts
-        String[] src_context_seperator = parts[SRC_CONTEXT].split("/",-1);
-        String[] targ_context_seperator = parts[TARG_CONTEXT].split("/",-1);
-        
-        for(int i=0; i<src_context_seperator.length; i++)
-        {
-            src_contexts.put(src_context_seperator[i],null);
-            System.out.println("Inside src context seperator "+src_context_seperator[i]);
-            
-        }
-        
-        for(int i=0; i<targ_context_seperator.length; i++)
-        {
-            targ_contexts.put(targ_context_seperator[i],null);
-            System.out.println("Inside targ context seperator "+targ_context_seperator[i]);
-            
-        }
+       
         
         System.out.println("\n**********parsed line: "+k);
         k++;

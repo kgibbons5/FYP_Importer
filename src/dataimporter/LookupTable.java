@@ -158,7 +158,10 @@ public class LookupTable {
                                  Statement.RETURN_GENERATED_KEYS);
         this.pst.setString(1, key);
 
-
+        if(id!=null){
+            this.pst.setLong(2,id);
+        }
+        
         this.rs = pst.executeQuery();
         long x=0;
         while (this.rs.next()) {
