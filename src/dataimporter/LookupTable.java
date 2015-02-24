@@ -15,8 +15,7 @@ import java.util.Hashtable;
  */
 public class LookupTable {
     
-    protected Hashtable<String, Long> hashtable;
-    
+    protected Hashtable<String, Long> hashtable;    
     
     protected String select_id_sql="";
     protected String insert_id_sql="";
@@ -26,7 +25,7 @@ public class LookupTable {
     protected ResultSet rs=null;
     protected PreparedStatement pst = null; 
     
-    //cache in memory fast lookuos
+    //cache in memory fast lookups
         
      // create an instance of con not multiple
     //abstartact class will use any connector
@@ -117,8 +116,10 @@ public class LookupTable {
         }
         try{
         
-            // 
+            //test 
             System.out.println("isql:"+this.insert_id_sql+" | "+key+" | "+id);
+            
+            
             this.pst = this.db_con.prepareStatement(this.insert_id_sql  ,
                                   Statement.RETURN_GENERATED_KEYS);
             //

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dataimporter;
 
 import java.sql.Connection;
@@ -17,7 +12,7 @@ import java.sql.Statement;
  */
 public class Lookuper {
     
-   static public long Termlookup(Connection con,String term, long lang_id) throws SQLException{
+    static public long Termlookup(Connection con, String term, long lang_id) throws SQLException{
 
         long x=0;
         PreparedStatement pst=null;
@@ -106,48 +101,93 @@ public class Lookuper {
         return x;     
     }
     
-     static public long Contextlookup(Connection con, long terms_id, long context_id) throws SQLException{
+    static public long Contextlookup(Connection con, long terms_id, long context_id) throws SQLException{
 
-        long x=0;
-        PreparedStatement pst=null;
-        
-        try{
-            
-            pst = con.prepareStatement("Insert into terms_has_context (terms_id, context_id) VALUES (?,?);"  ,
-                                                  Statement.RETURN_GENERATED_KEYS);
-            pst.setLong(1, terms_id);
-            pst.setLong(2, context_id);
-            if( pst.executeUpdate()!=0){
-                // if successful
-                // return new id(primary key)
-                try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {                        
-                        x = generatedKeys.getInt(1);
-                        generatedKeys.close();
-                        pst.close();
-                        return x;
-                    }
-                }                                
-            }   
-            
-            pst.close();
-        }catch(Exception e){
-            pst.close();
-        }
+       long x=0;
+       PreparedStatement pst=null;
 
-        pst = con.prepareStatement("Select id from terms_has_context where terms_id=? and context_id=? limit 1;" ,
-                                      Statement.RETURN_GENERATED_KEYS);
-        pst.setLong(1, terms_id);
-        pst.setLong(2, context_id);
-        ResultSet rs=pst.executeQuery();
-        x=0;
-        while (rs.next()) {
-            x=(long)rs.getInt(1);
-            break;
-        }
-        rs.close();
-        pst.close();
-        return x;     
-    }
+       try{
+
+           pst = con.prepareStatement("Insert into terms_has_context (terms_id, context_id) VALUES (?,?);"  ,
+                                                 Statement.RETURN_GENERATED_KEYS);
+           pst.setLong(1, terms_id);
+           pst.setLong(2, context_id);
+           if( pst.executeUpdate()!=0){
+               // if successful
+               // return new id(primary key)
+               try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                   if (generatedKeys.next()) {                        
+                       x = generatedKeys.getInt(1);
+                       generatedKeys.close();
+                       pst.close();
+                       return x;
+                   }
+               }                                
+           }   
+
+           pst.close();
+       }catch(Exception e){
+           pst.close();
+       }
+
+       pst = con.prepareStatement("Select id from terms_has_context where terms_id=? and context_id=? limit 1;" ,
+                                     Statement.RETURN_GENERATED_KEYS);
+       pst.setLong(1, terms_id);
+       pst.setLong(2, context_id);
+       ResultSet rs=pst.executeQuery();
+       x=0;
+       while (rs.next()) {
+           x=(long)rs.getInt(1);
+           break;
+       }
+       rs.close();
+       pst.close();
+       return x;     
+   }
+    
+    
+    static public long Translationslookup(Connection con, long src_term_id, long targ_term_id) throws SQLException{
+
+       long x=0;
+       PreparedStatement pst=null;
+
+       try{
+
+           pst = con.prepareStatement("Insert into translations (src_term_id, targ_term_id) VALUES (?,?);"  ,
+                                                 Statement.RETURN_GENERATED_KEYS);
+           pst.setLong(1, src_term_id);
+           pst.setLong(2, targ_term_id);
+           if( pst.executeUpdate()!=0){
+               // if successful
+               // return new id(primary key)
+               try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                   if (generatedKeys.next()) {                        
+                       x = generatedKeys.getInt(1);
+                       generatedKeys.close();
+                       pst.close();
+                       return x;
+                   }
+               }                                
+           }   
+
+           pst.close();
+       }catch(Exception e){
+           pst.close();
+       }
+
+       pst = con.prepareStatement("Select id from translations where src_term_id=? and targ_term_id=? limit 1;" ,
+                                     Statement.RETURN_GENERATED_KEYS);
+       pst.setLong(1, src_term_id);
+       pst.setLong(2, targ_term_id);
+       ResultSet rs=pst.executeQuery();
+       x=0;
+       while (rs.next()) {
+           x=(long)rs.getInt(1);
+           break;
+       }
+       rs.close();
+       pst.close();
+       return x;     
+   }
     
 }

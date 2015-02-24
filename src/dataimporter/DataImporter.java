@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import static java.security.AccessController.getContext;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -22,17 +23,16 @@ public class DataImporter {
     static Connection con = null; 
     static BufferedReader br = null;
     static PreparedStatement pst = null; 
+    static ResultSet rs = null;
     
     
     static LookupTable _languagehtc = null;
     static LookupTable _categorieshtc = null;
     static LookupTable _contexthtc = null;
     
-    public static String[]parts = null;
+    public static String[] parts = null;
     public static String[] categories = null;
 
-    public static boolean categories_set = false;
-    
     public static String[]  src_contexts = null;
     public static String[]  targ_contexts = null;
  
@@ -69,7 +69,7 @@ public class DataImporter {
         long targ_lang_id=0;
         long src_term_id=0;
         long targ_term_id=0;
-        //long category_id=0;
+        long translation_id=0;
         
        
         while((line=br.readLine())!=null)
@@ -94,45 +94,84 @@ public class DataImporter {
                 
                 
                 // put into each of their own try catch
-                
-                for(int j=0; j<categories.length; j++)
-                {
-                   System.out.println("Inside categories "+categories[j]);
-                   long category_id=_categorieshtc.getID(categories[j]);
-                   System.out.println("\nCategory id is:"+ category_id);
-                   long src_term_has_cat_id = Lookuper.Categorylookup(con, src_term_id,category_id );
-                   long targ_term_has_cat_id = Lookuper.Categorylookup(con, targ_term_id, category_id);
-                   System.out.println("\nsrc_term_has_context_id : "+src_term_has_cat_id );
-                   System.out.println("\ntarg_term_has_context_id : "+targ_term_has_cat_id );
+                try{
+                    for(int j=0; j<categories.length; j++)
+                    {
+                       System.out.println("Inside categories "+categories[j]);
+                       long category_id=_categorieshtc.getID(categories[j]);
+                       System.out.println("\nCategory id is:"+ category_id);
+                       long src_term_has_cat_id = Lookuper.Categorylookup(con, src_term_id,category_id );
+                       long targ_term_has_cat_id = Lookuper.Categorylookup(con, targ_term_id, category_id);
+                       System.out.println("\nsrc_term_has_context_id : "+src_term_has_cat_id );
+                       System.out.println("\ntarg_term_has_context_id : "+targ_term_has_cat_id );
+                    }
                 }
+                 catch(Exception e){
+                     System.err.println("Categories warning:"+e.getMessage()); 
+                 }
                 
-                 for(int j=0; j<src_contexts.length; j++)
-                {
-                   System.out.println("Inside categories "+src_contexts[j]);
-                   long context_id=_contexthtc.getID(src_contexts[j],src_lang_id);
-                   System.out.println("\nCategory id is:"+ context_id);
-                   long src_term_has_contetx_id = Lookuper.Contextlookup(con, src_term_id,context_id );
-                   System.out.println("\nsrc_term_has_context_id : "+src_term_has_contetx_id );
+                
+                
+                try{
+                    for(int j=0; j<src_contexts.length; j++)
+                    {
+                       System.out.println("Inside categories "+src_contexts[j]);
+                       long context_id=_contexthtc.getID(src_contexts[j],src_lang_id);
+                       System.out.println("\nCategory id is:"+ context_id);
+                       long src_term_has_contetx_id = Lookuper.Contextlookup(con, src_term_id,context_id );
+                       System.out.println("\nsrc_term_has_context_id : "+src_term_has_contetx_id );
+                    }
                 }
+                catch(Exception e){
+                     System.err.println("Source context warning:"+e.getMessage()); 
+                 }
                  
                  
-                  for(int j=0; j<targ_contexts.length; j++)
-                {
-                   System.out.println("Inside categories "+targ_contexts[j]);
-                   long context_id=_contexthtc.getID(targ_contexts[j],targ_lang_id);
-                   System.out.println("\nCategory id is:"+ context_id);
-                   long targ_term_has_context_id = Lookuper.Contextlookup(con, targ_term_id, context_id);
-                   System.out.println("\ntarg_term_has_context_id : "+targ_term_has_context_id );
+                try{
+                    for(int j=0; j<targ_contexts.length; j++)
+                    {
+                       System.out.println("Inside categories "+targ_contexts[j]);
+                       long context_id=_contexthtc.getID(targ_contexts[j],targ_lang_id);
+                       System.out.println("\nCategory id is:"+ context_id);
+                       long targ_term_has_context_id = Lookuper.Contextlookup(con, targ_term_id, context_id);
+                       System.out.println("\ntarg_term_has_context_id : "+targ_term_has_context_id );
+                    }
                 }
+                catch(Exception e){
+                    System.err.println("Target context warning:"+e.getMessage()); 
+                }
+                
                 
                 
                 // insert into translations table
-                pst = con.prepareStatement("Insert into translations (src_term_id, targ_term_id) VALUES (?,?);"  ,
-                                          Statement.RETURN_GENERATED_KEYS);
-                pst.setLong(1, src_term_id);
-                pst.setLong(2, targ_term_id);
+                translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
+                
+                
+                
+                // Similarity
+                // after every insert to translations inspect all data in translation table
+                // select all from translation where src_term_ids are the same
+                // & where targ_term_ids are the same
+                // next check if they point to same language
+                try{
+                    pst = con.prepareStatement("Select * from translations where src_term_id = ?");
+                    pst.setLong(1, src_term_id);
+                    rs = pst.executeQuery();
 
-                pst.executeUpdate();
+                    while(rs.next()){
+                        Long src_trans_id = rs.getLong("src_term_id");
+
+                        System.out.println("\n!!!!    Translation src ids: "+src_trans_id);
+
+                    }
+                }
+                catch(Exception e){
+                    System.err.println("Translation simimarity warning:"+e.getMessage()); 
+                }
+                
+                
+                
+                
 
             }
             
@@ -172,17 +211,13 @@ public class DataImporter {
                 "Select id from context where context=? and language=? limit 1;",
                 null
             ); 
-            
-            
-           
+                    
             return true;
         }
         
         return false;
     }
-     
- 
-    
+       
     /*
       
     static final int CATEGORY = 0;
@@ -197,8 +232,8 @@ public class DataImporter {
 
     public static boolean parsed(String line){
       
-       parts =null;
-       parts=line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+       parts = null;
+       parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
        
         for(int i=0; i<parts.length; i++)
         {
@@ -207,31 +242,31 @@ public class DataImporter {
         }
          
         
-        if (parts[CATEGORY].length()>0){
+        if(parts[CATEGORY].length()>0){
              //if category field not empty have to reuse it
             categories = parts[CATEGORY].split("/",-1);
         }
-        // always greater than 0???????????????????
+        
         System.out.println("Category seperator size  " +categories.length);
         
-       
-        // dont want to share contexts
-        src_contexts=null;
-        targ_contexts=null;
+        // dont want to share contexts so clear
+        src_contexts = null;
+        targ_contexts = null;
         
-         if (parts[SRC_CONTEXT].length()>0){
+        if (parts[SRC_CONTEXT].length()>0){
             src_contexts = parts[SRC_CONTEXT].split("/",-1);
         }
          
-          if (parts[TARG_CONTEXT].length()>0){
+        if (parts[TARG_CONTEXT].length()>0){
             targ_contexts = parts[TARG_CONTEXT].split("/",-1);
         }
-        
-       
         
         System.out.println("\n**********parsed line: "+k);
         k++;
         
+        System.out.println("\n*categories array: "+Arrays.toString(categories));
+        System.out.println("\n*src_contexts array: "+Arrays.toString(src_contexts));
+        System.out.println("\n*targ_contexts array: "+Arrays.toString(targ_contexts));
         return true;
         
     }
