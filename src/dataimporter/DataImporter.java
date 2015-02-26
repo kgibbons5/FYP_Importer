@@ -6,13 +6,16 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import static java.security.AccessController.getContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.swing.JOptionPane;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.*;
 /*
  *
  * @author Katie
@@ -70,6 +73,7 @@ public class DataImporter {
         long src_term_id=0;
         long targ_term_id=0;
         long translation_id=0;
+        long sim_translation_id=0;
         
        
         while((line=br.readLine())!=null)
@@ -144,7 +148,7 @@ public class DataImporter {
                 
                 
                 // insert into translations table
-                translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
+               translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
                 
                 
                 
@@ -154,24 +158,96 @@ public class DataImporter {
                 // & where targ_term_ids are the same
                 // next check if they point to same language
                 try{
-                    pst = con.prepareStatement("Select * from translations where src_term_id = ?");
+                    
+                    pst = con.prepareStatement("Select targ_term_id from translations where src_term_id = ?");
                     pst.setLong(1, src_term_id);
                     rs = pst.executeQuery();
-
+                    int count=1;
+                    List<Long> targ_values = new ArrayList<>();
+                    List<String> similar_terms = new ArrayList<>();
+                    
                     while(rs.next()){
-                        Long src_trans_id = rs.getLong("src_term_id");
-
-                        System.out.println("\n!!!!    Translation src ids: "+src_trans_id);
-
+                        long targ_trans_id = rs.getLong("targ_term_id");
+                        targ_values.add(targ_trans_id);
+                        System.out.println("\n!!!!    Translation src ids: "+targ_trans_id+" | count: "+count);
+                        count++;                      
+                        
                     }
+                         
+                    long size = targ_values.size();
+                    System.out.println("Size is!!: "+size);
+                    //always comapare fist with last??
+                    if(targ_values.size()>1){
+                    
+                    
+                        long targ_trans_value_1 = targ_values.get(0);
+                        System.out.println("Target values 1 is " +targ_trans_value_1);
+                        // get last element in list
+                        long targ_trans_value_2 = targ_values.get(targ_values.size()-1);
+                        System.out.println("Target values 2 is " +targ_trans_value_2);
+
+
+                        //select id and string
+                        pst = con.prepareStatement("Select language_id, term from terms where id in (?,?)");
+                        pst.setLong(1, targ_trans_value_1);
+                        pst.setLong(2, targ_trans_value_2);
+                        rs = pst.executeQuery();
+
+                        //clear list for resue
+                        targ_values.clear();
+
+                        while(rs.next()){
+                            long lang_trans_id = rs.getLong("language_id");
+                            String sim_term = rs.getString("term");
+                            System.out.println("term is : >>"+sim_term);
+                            targ_values.add(lang_trans_id);
+                            similar_terms.add(sim_term);
+
+                        }
+
+                        long lang_trans_value_1 = targ_values.get(0);
+                        // get last element in list
+                        long lang_trans_value_2 = targ_values.get(targ_values.size()-1);
+
+                        System.out.println("*******language 1 is " +lang_trans_value_1);
+                        System.out.println("*******language 2 is " +lang_trans_value_2);
+
+
+                        String sim_term_1 = similar_terms.get(0);
+                        // get last element in list
+                        String sim_term_2 = similar_terms.get(similar_terms.size()-1);
+
+                        System.out.println("*******term 1 is " +sim_term_1);
+                        System.out.println("*******term 2 is " +sim_term_2);
+
+
+
+                        // if equal then calculate similarity score
+                        if(lang_trans_value_1 == lang_trans_value_2)
+                        {
+                            System.out.println("\n\nWhoop they are the same!!");
+
+                            AbstractStringMetric metric = new Levenshtein();
+                            float sim_score = metric.getSimilarity(sim_term_1, sim_term_2);
+                            System.out.println("Similarity score is " +sim_score);
+
+                            //SimTranslationslookup           
+                            sim_translation_id = Lookuper.SimTranslationslookup(con, targ_trans_value_1, targ_trans_value_2,sim_score);
+
+
+                        }
+                    }
+                    
+                    //clear list for resue
+                    targ_values.clear();
+                    
+                    
+                    
                 }
                 catch(Exception e){
-                    System.err.println("Translation simimarity warning:"+e.getMessage()); 
+                    System.err.println("Translation simimarity warning: "+e.getMessage()); 
                 }
-                
-                
-                
-                
+                            
 
             }
             
@@ -249,12 +325,15 @@ public class DataImporter {
         
         System.out.println("Category seperator size  " +categories.length);
         
+        
         // dont want to share contexts so clear
         src_contexts = null;
         targ_contexts = null;
         
+       
+        
         if (parts[SRC_CONTEXT].length()>0){
-            src_contexts = parts[SRC_CONTEXT].split("/",-1);
+            src_contexts = parts[SRC_CONTEXT].split("/");
         }
          
         if (parts[TARG_CONTEXT].length()>0){
