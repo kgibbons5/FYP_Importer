@@ -159,90 +159,90 @@ public class DataImporter {
                 // next check if they point to same language
                
                // righthand side similar values in table
-//                try{
-//                    
-//                    pst = con.prepareStatement("Select targ_term_id from translations where src_term_id = ?");
-//                    pst.setLong(1, src_term_id);
-//                    rs = pst.executeQuery();
-//                    int count=1;
-//                    List<Long> targ_values = new ArrayList<>();
-//                    List<String> similar_terms = new ArrayList<>();
-//                    
-//                    while(rs.next()){
-//                        long targ_trans_id = rs.getLong("targ_term_id");
-//                        targ_values.add(targ_trans_id);
-//                        System.out.println("\n!!!!    Translation src ids: "+targ_trans_id+" | count: "+count);
-//                        count++;                      
-//                        
-//                    }
-//                         
-//                    long size = targ_values.size();
-//                    System.out.println("Size is!!: "+size);
-//                    //always comapare fist with last??
-//                    if(targ_values.size()>1){
-//                    
-//                        long targ_trans_value_1 = targ_values.get(0);
-//                        System.out.println("Target values 1 is " +targ_trans_value_1);
-//                        // get last element in list
-//                        long targ_trans_value_2 = targ_values.get(targ_values.size()-1);
-//                        System.out.println("Target values 2 is " +targ_trans_value_2);
-//
-//
-//                        //select id and string
-//                        pst = con.prepareStatement("Select language_id, term from terms where id in (?,?)");
-//                        pst.setLong(1, targ_trans_value_1);
-//                        pst.setLong(2, targ_trans_value_2);
-//                        rs = pst.executeQuery();
-//
-//                        //clear list for resue
-//                        targ_values.clear();
-//
-//                        while(rs.next()){
-//                            
-//                            long lang_trans_id = rs.getLong("language_id");
-//                            String sim_term = rs.getString("term");
-//                            System.out.println("term is : >>"+sim_term);
-//                            targ_values.add(lang_trans_id);
-//                            similar_terms.add(sim_term);
-//
-//                        }
-//
-//                        long lang_trans_value_1 = targ_values.get(0);
-//                        // get last element in list
-//                        long lang_trans_value_2 = targ_values.get(targ_values.size()-1);
-//
-//                        System.out.println("*******language 1 is " +lang_trans_value_1);
-//                        System.out.println("*******language 2 is " +lang_trans_value_2);
-//
-//
-//                        String sim_term_1 = similar_terms.get(0);
-//                        // get last element in list
-//                        String sim_term_2 = similar_terms.get(similar_terms.size()-1);
-//
-//                        System.out.println("*******term 1 is " +sim_term_1);
-//                        System.out.println("*******term 2 is " +sim_term_2);
-//
-//                        // if equal then calculate similarity score
-//                        if(lang_trans_value_1 == lang_trans_value_2)
-//                        {
-//                            System.out.println("\n\nWhoop they are the same!!");
-//
-//                            AbstractStringMetric metric = new Levenshtein();
-//                            float sim_score = metric.getSimilarity(sim_term_1, sim_term_2);
-//                            System.out.println("Similarity score is " +sim_score);
-//
-//                            //SimTranslationslookup           
-//                            sim_translation_id = Lookuper.SimTranslationslookup(con, targ_trans_value_1, targ_trans_value_2,sim_score);
-//                        }
-//                    }
-//                    
-//                    //clear list for resue
-//                    targ_values.clear();   
-//                    
-//                }
-//                catch(Exception e){
-//                    System.err.println("Translation simimarity right handside warning: "+e.getMessage()); 
-//                }
+                try{
+                    
+                    pst = con.prepareStatement("Select targ_term_id from translations where src_term_id = ?");
+                    pst.setLong(1, src_term_id);
+                    rs = pst.executeQuery();
+                    int count=1;
+                    List<Long> targ_values = new ArrayList<>();
+                    List<String> similar_terms = new ArrayList<>();
+                    
+                    while(rs.next()){
+                        long targ_trans_id = rs.getLong("targ_term_id");
+                        targ_values.add(targ_trans_id);
+                        System.out.println("\n!!!!    Translation src ids: "+targ_trans_id+" | count: "+count);
+                        count++;                      
+                        
+                    }
+                         
+                    long size = targ_values.size();
+                    System.out.println("Size is!!: "+size);
+                    //always comapare fist with last??
+                    if(targ_values.size()>1){
+                    
+                        long targ_trans_value_1 = targ_values.get(0);
+                        System.out.println("Target values 1 is " +targ_trans_value_1);
+                        // get last element in list
+                        long targ_trans_value_2 = targ_values.get(targ_values.size()-1);
+                        System.out.println("Target values 2 is " +targ_trans_value_2);
+
+
+                        //select id and string
+                        pst = con.prepareStatement("Select language_id, term from terms where id in (?,?)");
+                        pst.setLong(1, targ_trans_value_1);
+                        pst.setLong(2, targ_trans_value_2);
+                        rs = pst.executeQuery();
+
+                        //clear list for resue
+                        targ_values.clear();
+
+                        while(rs.next()){
+                            
+                            long lang_trans_id = rs.getLong("language_id");
+                            String sim_term = rs.getString("term");
+                            System.out.println("term is : >>"+sim_term);
+                            targ_values.add(lang_trans_id);
+                            similar_terms.add(sim_term);
+
+                        }
+
+                        long lang_trans_value_1 = targ_values.get(0);
+                        // get last element in list
+                        long lang_trans_value_2 = targ_values.get(targ_values.size()-1);
+
+                        System.out.println("*******language 1 is " +lang_trans_value_1);
+                        System.out.println("*******language 2 is " +lang_trans_value_2);
+
+
+                        String sim_term_1 = similar_terms.get(0);
+                        // get last element in list
+                        String sim_term_2 = similar_terms.get(similar_terms.size()-1);
+
+                        System.out.println("*******term 1 is " +sim_term_1);
+                        System.out.println("*******term 2 is " +sim_term_2);
+
+                        // if equal then calculate similarity score
+                        if(lang_trans_value_1 == lang_trans_value_2)
+                        {
+                            System.out.println("\n\nWhoop they are the same!!");
+
+                            AbstractStringMetric metric = new Levenshtein();
+                            float sim_score = metric.getSimilarity(sim_term_1, sim_term_2);
+                            System.out.println("Similarity score is " +sim_score);
+
+                            //SimTranslationslookup           
+                            sim_translation_id = Lookuper.SimTranslationslookup(con, targ_trans_value_1, targ_trans_value_2,sim_score);
+                        }
+                    }
+                    
+                    //clear list for resue
+                    targ_values.clear();   
+                    
+                }
+                catch(Exception e){
+                    System.err.println("Translation simimarity right handside warning: "+e.getMessage()); 
+                }
                
                // righthand side similar values in table
                try{
@@ -329,14 +329,10 @@ public class DataImporter {
                 catch(Exception e){
                     System.err.println("Translation simimarity left handside warning: "+e.getMessage()); 
                 }
-                            
-
             }
-            
             
             System.out.println("> "+line);
         }
-       
     }
     
     public static boolean init() throws ClassNotFoundException, SQLException, FileNotFoundException{
@@ -372,7 +368,7 @@ public class DataImporter {
                     
             return true;
         }
-        
+
         return false;
     }
        
@@ -391,35 +387,34 @@ public class DataImporter {
     public static boolean parsed(String line){
       
        parts = null;
+       // keep commas within column
        parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
        
         for(int i=0; i<parts.length; i++)
         {
             // remove quotations
             parts[i] = parts[i].replace("\"","").toLowerCase();
+            System.out.println("part is :"+parts[i]);
         }
          
-        
         if(parts[CATEGORY].length()>0){
              //if category field not empty have to reuse it
-            categories = parts[CATEGORY].split("/",-1);
+            //categories = parts[CATEGORY].split("/",-1);
+            categories = parts[CATEGORY].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
         }
         
         System.out.println("Category seperator size  " +categories.length);
-        
         
         // dont want to share contexts so clear
         src_contexts = null;
         targ_contexts = null;
         
-       
-        
         if (parts[SRC_CONTEXT].length()>0){
-            src_contexts = parts[SRC_CONTEXT].split("/");
+            src_contexts = parts[SRC_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
         }
          
         if (parts[TARG_CONTEXT].length()>0){
-            targ_contexts = parts[TARG_CONTEXT].split("/",-1);
+            targ_contexts = parts[TARG_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
         }
         
         System.out.println("\n**********parsed line: "+k);
@@ -431,5 +426,4 @@ public class DataImporter {
         return true;
         
     }
-    
 }
