@@ -388,13 +388,13 @@ public class DataImporter {
       
        parts = null;
        // keep commas within column
-       parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+       parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)",7);
        
         for(int i=0; i<parts.length; i++)
         {
             // remove quotations
             parts[i] = parts[i].replace("\"","").toLowerCase();
-            System.out.println("part is :"+parts[i]);
+            System.out.println("part is "+i+ ":"+parts[i]);
         }
          
         if(parts[CATEGORY].length()>0){
@@ -410,11 +410,11 @@ public class DataImporter {
         targ_contexts = null;
         
         if (parts[SRC_CONTEXT].length()>0){
-            src_contexts = parts[SRC_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
+            src_contexts = parts[SRC_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)" ,-1);
         }
          
         if (parts[TARG_CONTEXT].length()>0){
-            targ_contexts = parts[TARG_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
+            targ_contexts = parts[TARG_CONTEXT].split("(/)|(\\,)|(\\;)|(\\\\)" ,-1);
         }
         
         System.out.println("\n**********parsed line: "+k);
