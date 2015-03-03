@@ -396,6 +396,47 @@ public class DataImporter {
             parts[i] = parts[i].replace("\"","").toLowerCase();
             System.out.println("part is "+i+ ":"+parts[i]);
         }
+        
+        switch(parts[2]){
+            case "en":
+                parts[2]="english";
+                break;
+            case "eng":
+                parts[2]="english";
+                break;
+            case "fr":
+                parts[2]="french";
+                break;
+            case "es":
+                parts[2]="spanish";
+                break;
+            case "it":
+                parts[2]="italian";
+                break;
+            default:
+                break;
+        }
+        
+        switch(parts[4]){
+            case "en":
+                parts[4]="english";
+                break;
+            case "eng":
+                parts[4]="english";
+                break;
+            case "fr":
+                parts[4]="french";
+                break;
+            case "es":
+                parts[4]="spanish";
+                break;
+            case "it":
+                parts[4]="italian";
+                break;
+            default:
+                break;
+        }
+        
          
         if(parts[CATEGORY].length()>0){
              //if category field not empty have to reuse it
