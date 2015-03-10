@@ -74,7 +74,7 @@ public class DataImporter {
         long targ_term_id=0;
         long translation_id=0;
         long sim_translation_id=0;
-        
+        long count_query=0;        
        
         while((line=br.readLine())!=null)
         {
@@ -145,10 +145,31 @@ public class DataImporter {
                     System.err.println("Target context warning:"+e.getMessage()); 
                 }
                 
+                /*select count(*) from translations where (src_term_id = 3 and targ_term_id = 4) or (src_term_id = 4 and targ_term_id = 3);
+                select count(*) from translations where (src_term_id = src_term_id and targ_term_id = targ_term_id) or (src_term_id = targ_term_id and targ_term_id = src_term_id);
+                */
+                
+                //if greater than 0 dont insert as translation is two way e.g 1 to 2 is same as 2 to 1
+                pst = con.prepareStatement("select count(*) from translations where (src_term_id = ? and targ_term_id = ?) or (src_term_id = ? and targ_term_id = ?);");
+                        pst.setLong(1, src_term_id);
+                        pst.setLong(2, targ_term_id);
+                        pst.setLong(3, targ_term_id);
+                        pst.setLong(4, src_term_id);
+                        rs = pst.executeQuery();
+                
+                if (rs.next()) {                        
+                        count_query = rs.getInt(1);
+                        System.out.println("Count query is!! "+count_query);
+                }
+                
+                if(count_query<=0){
+                    translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
+                }
+                
                 
                 
                 // insert into translations table
-               translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
+               //translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
                 
                 
                 
