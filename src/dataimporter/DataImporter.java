@@ -96,6 +96,20 @@ public class DataImporter {
                 src_term_id = Lookuper.Termlookup(con, parts[SRC_TERM], src_lang_id);
                 targ_term_id = Lookuper.Termlookup(con, parts[TARG_TERM], targ_lang_id);
                 
+               
+                //synonyms
+                if(checkEnglishTerm(src_lang_id)){
+                    System.out.println("whoooooooooop source is english");
+                }
+                
+                
+                if(checkEnglishTerm(targ_lang_id)){
+                    System.out.println("whoooooooooop target is english");
+                }
+                
+                
+                
+                
                 
                 // put into each of their own try catch
                 try{
@@ -170,6 +184,8 @@ public class DataImporter {
                 
                 // insert into translations table
                //translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
+                
+                
                 
                 
                 
@@ -413,8 +429,10 @@ public class DataImporter {
        
         for(int i=0; i<parts.length; i++)
         {
-            // remove quotations
-            parts[i] = parts[i].replace("\"","").toLowerCase();
+            // remove quotations "" ''  "(/)|(\\,)
+            parts[i] = parts[i].replace("\"","").toLowerCase();     
+            parts[i] = parts[i].replace("'","");
+            
             System.out.println("part is "+i+ ":"+parts[i]);
         }
         
@@ -488,4 +506,40 @@ public class DataImporter {
         return true;
         
     }
+    
+    
+    public static boolean checkEnglishTerm(long term_lang_id) throws SQLException{
+        
+        Statement st = null; 
+        //long term_lang=0;
+        long eng_lang=0;
+        
+        try{
+
+            st =con.createStatement();
+            rs = st.executeQuery("Select id from languages where language like 'english';");
+               
+               
+            while(rs.next()){
+                eng_lang=rs.getLong("id");
+            }
+
+           }
+           catch(SQLException e){
+               e.printStackTrace();
+           }
+        
+        if(eng_lang==term_lang_id){
+            System.out.println("SAME LANGUAGE");
+            return true;
+        }
+        else{
+            System.out.println("DIFFERENT LANGUAGE");
+            return false;
+        }
+        
+    }
+    
+    
+    
 }
