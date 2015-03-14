@@ -569,11 +569,11 @@ public class DataImporter {
            }
         
         if(eng_lang==term_lang_id){
-            System.out.println("ENGLISH");
+            System.out.println("ENGLISH term_id: "+term_lang_id);
             return true;
         }
         else{
-            System.out.println("NOT ENGLISH");
+            System.out.println("NOT ENGLISH term_id: "+term_lang_id);
             return false;
         }
         

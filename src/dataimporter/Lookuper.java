@@ -146,6 +146,51 @@ public class Lookuper {
    }
     
     
+    static public long Synonymlookup(Connection con, long terms_id, long synonyms_id) throws SQLException{
+
+       long x=0;
+       PreparedStatement pst=null;
+
+       try{
+
+           pst = con.prepareStatement("Insert into terms_has_synonyms (terms_id, synonyms_id) VALUES (?,?);"  ,
+                                                 Statement.RETURN_GENERATED_KEYS);
+           pst.setLong(1, terms_id);
+           pst.setLong(2, synonyms_id);
+           if( pst.executeUpdate()!=0){
+               // if successful
+               // return new id(primary key)
+               try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                   if (generatedKeys.next()) {                        
+                       x = generatedKeys.getInt(1);
+                       generatedKeys.close();
+                       pst.close();
+                       return x;
+                   }
+               }                                
+           }   
+
+           pst.close();
+       }catch(Exception e){
+           pst.close();
+       }
+
+       pst = con.prepareStatement("Select id from terms_has_synonyms where terms_id=? and synonyms_id=? limit 1;" ,
+                                     Statement.RETURN_GENERATED_KEYS);
+       pst.setLong(1, terms_id);
+       pst.setLong(2, synonyms_id);
+       ResultSet rs=pst.executeQuery();
+       x=0;
+       while (rs.next()) {
+           x=(long)rs.getInt(1);
+           break;
+       }
+       rs.close();
+       pst.close();
+       return x;     
+    }
+    
+    
     static public long Translationslookup(Connection con, long src_term_id, long targ_term_id) throws SQLException{
 
        long x=0;
