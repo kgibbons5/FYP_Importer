@@ -46,6 +46,7 @@ public class DataImporter {
     static LookupTable _languagehtc = null;
     static LookupTable _categorieshtc = null;
     static LookupTable _contexthtc = null;
+    static LookupTable _synonymhtc = null;
     
     public static String[] parts = null;
     public static String[] categories = null;
@@ -80,6 +81,8 @@ public class DataImporter {
         _languagehtc.dump();
         _categorieshtc.dump();
         _contexthtc.dump();
+        _synonymhtc.dump();
+        
         
         
         long src_lang_id=0;
@@ -88,7 +91,7 @@ public class DataImporter {
         long targ_term_id=0;
         long translation_id=0;
         long sim_translation_id=0;
-        long count_query=0;        
+        long count_query=0;
         
        
         
@@ -130,7 +133,7 @@ public class DataImporter {
                         // Invalid syntax
                         return;
                     }
-                    d.insertResults(obj);
+                    d.insertResults(obj,src_term_id);
                 }
                 
                 
@@ -144,7 +147,7 @@ public class DataImporter {
                         // Invalid syntax
                         return;
                     }
-                    d.insertResults(obj);
+                    d.insertResults(obj,targ_term_id);
                 }
                 
                 
@@ -442,6 +445,13 @@ public class DataImporter {
                 "Select id from context where context=? and language=? limit 1;",
                 null
             ); 
+            
+            
+            _synonymhtc =new LookupTable(con, 
+                "Insert into synonyms (synonym) VALUES (?);", 
+                "Select id from synonyms where synonyms=? limit 1;",
+                "Select synonym,id from synonyms;"
+            );
                     
             return true;
         }
@@ -612,7 +622,8 @@ public class DataImporter {
 
     }
     
-    public void insertResults(Object obj){
+    public void insertResults(Object obj, long term_id) throws SQLException{
+        
             
         JSONObject jsonObject = (JSONObject) obj;
         
@@ -626,7 +637,8 @@ public class DataImporter {
                 while (iterator_noun.hasNext()) {
                     nouns.add(iterator_noun.next());
                 }
-        } else {
+        }
+        else {
             System.out.println("no nouns");
         }
         
@@ -643,31 +655,42 @@ public class DataImporter {
         }
         
         int count_nouns=0;
-        if(nouns.size()>1){
+        if(nouns.size()>2){
             
             //System.out.println("More than 5 nouns returned");
-            count_nouns = 1;
+            count_nouns = 2;
         }
         else{
             count_nouns = nouns.size();
         }
             
         int count_verbs=0;
-        if(verbs.size()>1){
+        if(verbs.size()>2){
             //System.out.println("More than 5 verbs returned");
-            count_verbs = 1;
+            count_verbs = 2;
         }
         else
         {
             count_verbs = verbs.size();
         }
              
+        
+                
+        System.out.println("Result set id is: "+term_id);
+        
         for (int i = 0; i < count_nouns; i++) {
             System.out.println("nouns: "+(nouns.get(i)));
+            long syn_id = _synonymhtc.getID(nouns.get(i));
+            long term_has_syn_id = Lookuper.Synonymlookup(con, term_id, syn_id);
+            
         }
         
+
         for (int i = 0; i < count_verbs; i++) {
             System.out.println("verbs: "+(verbs.get(i)));
+            long syn_id = _synonymhtc.getID(verbs.get(i));
+            long term_has_syn_id = Lookuper.Synonymlookup(con, term_id, syn_id);
+            
         }
      
     }
