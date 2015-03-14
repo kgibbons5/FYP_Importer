@@ -16,6 +16,20 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import javax.swing.JOptionPane;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Iterator;
+import javax.net.ssl.HttpsURLConnection;
+
+
+
 /*
  *
  * @author Katie
@@ -51,7 +65,7 @@ public class DataImporter {
     
     static int k=1;
     
-    public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException, IOException {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException, FileNotFoundException, IOException, Exception {
         
         // initalised fails e.g. file doesn't exist
         if(!init()){
@@ -75,6 +89,9 @@ public class DataImporter {
         long translation_id=0;
         long sim_translation_id=0;
         long count_query=0;        
+        
+       
+        
        
         while((line=br.readLine())!=null)
         {
@@ -98,13 +115,36 @@ public class DataImporter {
                 
                
                 //synonyms
+                DataImporter d = new DataImporter();
+                JSONParser parser = new JSONParser();
+                Object obj;
+                
                 if(checkEnglishTerm(src_lang_id)){
                     System.out.println("whoooooooooop source is english");
+                    //String api_call = d.sendGet(parts[SRC_TERM]);
+                    String api_call = d.sendGet("love");
+                    try{
+                        obj = parser.parse(api_call);
+                    }
+                    catch (ParseException parse) {
+                        // Invalid syntax
+                        return;
+                    }
+                    d.insertResults(obj);
                 }
                 
                 
                 if(checkEnglishTerm(targ_lang_id)){
                     System.out.println("whoooooooooop target is english");
+                    String api_call = d.sendGet(parts[TARG_TERM]);
+                    try{
+                        obj = parser.parse(api_call);
+                    }
+                    catch (ParseException parse) {
+                        // Invalid syntax
+                        return;
+                    }
+                    d.insertResults(obj);
                 }
                 
                 
@@ -511,7 +551,6 @@ public class DataImporter {
     public static boolean checkEnglishTerm(long term_lang_id) throws SQLException{
         
         Statement st = null; 
-        //long term_lang=0;
         long eng_lang=0;
         
         try{
@@ -530,16 +569,107 @@ public class DataImporter {
            }
         
         if(eng_lang==term_lang_id){
-            System.out.println("SAME LANGUAGE");
+            System.out.println("ENGLISH");
             return true;
         }
         else{
-            System.out.println("DIFFERENT LANGUAGE");
+            System.out.println("NOT ENGLISH");
             return false;
         }
         
     }
     
+    // HTTP GET request
+    public String sendGet(String term) throws Exception {
+
+            String url = "http://words.bighugelabs.com/api/2/d5813e4fd3350fc0199ce22926247826/"+term+"/json";
+
+            URL obj = new URL(url);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            // optional default is GET
+            con.setRequestMethod("GET");
+
+            String USER_AGENT = "Mozilla/5.0";
+            //add request header
+            con.setRequestProperty("User-Agent", USER_AGENT);
+
+            int responseCode = con.getResponseCode();
+            System.out.println("\nSending 'GET' request to URL : " + url);
+            System.out.println("Response Code : " + responseCode);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+            }
+            in.close();
+
+            
+            return(response.toString());
+
+    }
     
+    public void insertResults(Object obj){
+            
+        JSONObject jsonObject = (JSONObject) obj;
+        
+        List<String> nouns = new ArrayList<>();
+        List<String> verbs = new ArrayList<>();
+        
+        if(jsonObject.containsKey("noun")){
+            JSONObject subitem_noun = (JSONObject) jsonObject.get("noun");
+            JSONArray sub_subitem_noun_syn =   (JSONArray) subitem_noun.get("syn");
+                Iterator<String> iterator_noun = sub_subitem_noun_syn.iterator();
+                while (iterator_noun.hasNext()) {
+                    nouns.add(iterator_noun.next());
+                }
+        } else {
+            System.out.println("no nouns");
+        }
+        
+        if(jsonObject.containsKey("verb")){
+            JSONObject subitem_verb = (JSONObject) jsonObject.get("verb");
+            JSONArray sub_subitem_verb_syn =   (JSONArray) subitem_verb.get("syn");
+                    Iterator<String> iterator_verb = sub_subitem_verb_syn.iterator();
+                    while (iterator_verb.hasNext()) {
+                        verbs.add(iterator_verb.next());
+                    }
+        }
+        else {
+            System.out.println("no verbs");
+        }
+        
+        int count_nouns=0;
+        if(nouns.size()>1){
+            
+            //System.out.println("More than 5 nouns returned");
+            count_nouns = 1;
+        }
+        else{
+            count_nouns = nouns.size();
+        }
+            
+        int count_verbs=0;
+        if(verbs.size()>1){
+            //System.out.println("More than 5 verbs returned");
+            count_verbs = 1;
+        }
+        else
+        {
+            count_verbs = verbs.size();
+        }
+             
+        for (int i = 0; i < count_nouns; i++) {
+            System.out.println("nouns: "+(nouns.get(i)));
+        }
+        
+        for (int i = 0; i < count_verbs; i++) {
+            System.out.println("verbs: "+(verbs.get(i)));
+        }
+     
+    }
     
 }
