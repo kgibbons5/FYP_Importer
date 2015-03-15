@@ -124,8 +124,8 @@ public class DataImporter {
                 
                 if(checkEnglishTerm(src_lang_id)){
                     System.out.println("whoooooooooop source is english");
-                    //String api_call = d.sendGet(parts[SRC_TERM]);
-                    String api_call = d.sendGet("love");
+                    String api_call = d.sendGet(parts[SRC_TERM]);
+                    //String api_call = d.sendGet("love");
                     try{
                         obj = parser.parse(api_call);
                     }
@@ -140,6 +140,7 @@ public class DataImporter {
                 if(checkEnglishTerm(targ_lang_id)){
                     System.out.println("whoooooooooop target is english");
                     String api_call = d.sendGet(parts[TARG_TERM]);
+                    //String api_call = d.sendGet("love");
                     try{
                         obj = parser.parse(api_call);
                     }
