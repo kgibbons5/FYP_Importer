@@ -123,9 +123,8 @@ public class DataImporter {
                 Object obj;
                 
                 if(checkEnglishTerm(src_lang_id)){
-                    System.out.println("whoooooooooop source is english");
                     String api_call = d.sendGet(parts[SRC_TERM]);
-                    //String api_call = d.sendGet("love");
+                    if(api_call!=null){
                     try{
                         obj = parser.parse(api_call);
                     }
@@ -134,12 +133,13 @@ public class DataImporter {
                         return;
                     }
                     d.insertResults(obj,src_term_id);
+                    }
                 }
                 
                 
                 if(checkEnglishTerm(targ_lang_id)){
-                    System.out.println("whoooooooooop target is english");
                     String api_call = d.sendGet(parts[TARG_TERM]);
+                    if(api_call!=null){
                     //String api_call = d.sendGet("love");
                     try{
                         obj = parser.parse(api_call);
@@ -149,13 +149,10 @@ public class DataImporter {
                         return;
                     }
                     d.insertResults(obj,targ_term_id);
+                    }
                 }
                 
-                
-                
-                
-                
-                // put into each of their own try catch
+                        
                 try{
                     for(int j=0; j<categories.length; j++)
                     {
@@ -164,23 +161,22 @@ public class DataImporter {
                        System.out.println("\nCategory id is:"+ category_id);
                        long src_term_has_cat_id = Lookuper.Categorylookup(con, src_term_id,category_id );
                        long targ_term_has_cat_id = Lookuper.Categorylookup(con, targ_term_id, category_id);
-                       System.out.println("\nsrc_term_has_context_id : "+src_term_has_cat_id );
-                       System.out.println("\ntarg_term_has_context_id : "+targ_term_has_cat_id );
+                       System.out.println("\nsrc_term_has_cat_id : "+src_term_has_cat_id );
+                       System.out.println("\ntarg_term_has_cat_id : "+targ_term_has_cat_id );
                     }
                 }
                  catch(Exception e){
                      System.err.println("Categories warning:"+e.getMessage()); 
                  }
                 
-                
-                
                 try{
                     for(int j=0; j<src_contexts.length; j++)
                     {
-                       System.out.println("Inside categories "+src_contexts[j]);
-                       long context_id=_contexthtc.getID(src_contexts[j],src_lang_id);
-                       System.out.println("\nCategory id is:"+ context_id);
-                       long src_term_has_contetx_id = Lookuper.Contextlookup(con, src_term_id,context_id );
+                       System.out.println("Inside src context "+src_contexts[j]);
+                       System.out.println("src lang id "+src_lang_id);
+                       long src_context_id=_contexthtc.getID(src_contexts[j],src_lang_id);
+                       System.out.println("\n src context id is:"+ src_context_id);
+                       long src_term_has_contetx_id = Lookuper.Contextlookup(con, src_term_id,src_context_id );
                        System.out.println("\nsrc_term_has_context_id : "+src_term_has_contetx_id );
                     }
                 }
@@ -190,12 +186,13 @@ public class DataImporter {
                  
                  
                 try{
-                    for(int j=0; j<targ_contexts.length; j++)
+                    for(int m=0; m<targ_contexts.length; m++)
                     {
-                       System.out.println("Inside categories "+targ_contexts[j]);
-                       long context_id=_contexthtc.getID(targ_contexts[j],targ_lang_id);
-                       System.out.println("\nCategory id is:"+ context_id);
-                       long targ_term_has_context_id = Lookuper.Contextlookup(con, targ_term_id, context_id);
+                       System.out.println("Inside targ contetx "+targ_contexts[m]);
+                       System.out.println("targlang id "+targ_lang_id);
+                       long targ_context_id= _contexthtc.getID(targ_contexts[m], targ_lang_id);
+                       System.out.println("\ntarg context id is:"+ targ_context_id);
+                       long targ_term_has_context_id = Lookuper.Contextlookup(con, targ_term_id, targ_context_id);
                        System.out.println("\ntarg_term_has_context_id : "+targ_term_has_context_id );
                     }
                 }
@@ -223,12 +220,6 @@ public class DataImporter {
                 if(count_query<=0){
                     translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
                 }
-                
-                
-                
-                // insert into translations table
-               //translation_id = Lookuper.Translationslookup(con, src_term_id, targ_term_id);
-                
                 
                 
                 
@@ -440,10 +431,10 @@ public class DataImporter {
             );
             
             //building on fly dont' have to worry about loading
-            //since context is language driven we don't know which language to laod
+            //since context is language driven we don't know which language to load
             _contexthtc =new LookupTable(con, 
-                "Insert into context (context,language) VALUES (?,?);", 
-                "Select id from context where context=? and language=? limit 1;",
+                "Insert into context (context,language_id) VALUES (?,?);", 
+                "Select id from context where context=? and language_id=? limit 1;",
                 null
             ); 
             
@@ -459,18 +450,7 @@ public class DataImporter {
 
         return false;
     }
-       
-    /*
       
-    static final int CATEGORY = 0;
-    static final int SRC_TERM = 1;
-    static final int SRC_LANG = 2;
-    static final int SRC_CONTEXT = 3;
-    static final int TARG_LANG = 4;
-    static final int TARG_TERM = 5;
-    static final int TARG_CONTEXT = 6;
-    
-    */
 
     public static boolean parsed(String line){
       
@@ -527,10 +507,8 @@ public class DataImporter {
                 break;
         }
         
-         
+        //if category field not empty have to reuse it
         if(parts[CATEGORY].length()>0){
-             //if category field not empty have to reuse it
-            //categories = parts[CATEGORY].split("/",-1);
             categories = parts[CATEGORY].split("(/)|(\\,)|(\\;)|(\\\\)",-1);
         }
         
@@ -608,6 +586,11 @@ public class DataImporter {
             int responseCode = con.getResponseCode();
             System.out.println("\nSending 'GET' request to URL : " + url);
             System.out.println("Response Code : " + responseCode);
+            
+            if(responseCode==404){
+               return null;
+            }
+            else{
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
@@ -620,6 +603,7 @@ public class DataImporter {
 
             
             return(response.toString());
+            }
 
     }
     
@@ -656,34 +640,29 @@ public class DataImporter {
         }
         
         int count_nouns=0;
-        if(nouns.size()>2){
-            
-            //System.out.println("More than 5 nouns returned");
-            count_nouns = 2;
+        if(nouns.size()>3){
+            count_nouns = 3;
         }
         else{
             count_nouns = nouns.size();
         }
             
         int count_verbs=0;
-        if(verbs.size()>2){
+        if(verbs.size()>3){
             //System.out.println("More than 5 verbs returned");
-            count_verbs = 2;
+            count_verbs = 3;
         }
         else
         {
             count_verbs = verbs.size();
         }
-             
-        
-                
+     
         System.out.println("Result set id is: "+term_id);
         
         for (int i = 0; i < count_nouns; i++) {
             System.out.println("nouns: "+(nouns.get(i)));
             long syn_id = _synonymhtc.getID(nouns.get(i));
-            long term_has_syn_id = Lookuper.Synonymlookup(con, term_id, syn_id);
-            
+            long term_has_syn_id = Lookuper.Synonymlookup(con, term_id, syn_id);      
         }
         
 
